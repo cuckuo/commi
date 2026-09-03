@@ -73,8 +73,16 @@ textarea { resize:vertical; min-height:78px; line-height:1.6; }
 /* 색상 선택 */
 .color-pick-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 input[type="color"] {
-  width:40px; height:40px; border:1.5px solid var(--border);
-  border-radius:8px; cursor:pointer; background:none; padding:2px; flex-shrink:0;
+  position:absolute; opacity:0; width:0; height:0; pointer-events:none;
+}
+.color-btn-wrap {
+  display:flex; align-items:center; gap:8px;
+}
+.color-swatch-btn {
+  width:40px; height:40px; border-radius:8px;
+  border:1.5px solid var(--border); cursor:pointer;
+  flex-shrink:0; position:relative; overflow:hidden;
+  background: linear-gradient(135deg, #d4c5b0, #d4c5b0);
 }
 .color-add-btn {
   padding:7px 16px; border:1.5px solid var(--accent); border-radius:20px;
@@ -83,6 +91,70 @@ input[type="color"] {
 }
 .color-add-btn:hover { background:var(--accent); color:#fff; }
 .color-note { font-size:.73rem; color:var(--muted); }
+
+/* 커스텀 색상 피커 모달 */
+.cpicker-overlay {
+  display:none; position:fixed; inset:0; z-index:2000;
+  background:rgba(0,0,0,0.5);
+  align-items:center; justify-content:center;
+}
+.cpicker-overlay.open { display:flex; }
+.cpicker-box {
+  background:#fff; border-radius:16px;
+  padding:20px; width:300px; max-width:90vw;
+  box-shadow:0 8px 32px rgba(0,0,0,0.25);
+}
+.cpicker-title {
+  font-size:.9rem; font-weight:700; color:var(--accent);
+  margin-bottom:14px; text-align:center;
+}
+/* 그라데이션 캔버스 영역 */
+.cpicker-gradient {
+  width:100%; height:180px; border-radius:10px;
+  position:relative; cursor:crosshair; margin-bottom:12px;
+  touch-action:none;
+}
+.cpicker-gradient canvas { border-radius:10px; display:block; }
+.cpicker-cursor {
+  position:absolute; width:16px; height:16px;
+  border:2px solid #fff; border-radius:50%;
+  box-shadow:0 0 0 1.5px #000; pointer-events:none;
+  transform:translate(-50%,-50%);
+}
+/* 색상(hue) 슬라이더 */
+.cpicker-hue {
+  width:100%; height:20px; border-radius:10px; margin-bottom:12px;
+  background:linear-gradient(to right,
+    #ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000);
+  position:relative; cursor:pointer; touch-action:none;
+}
+.cpicker-hue-thumb {
+  position:absolute; top:50%; width:20px; height:20px;
+  border:2px solid #fff; border-radius:50%;
+  box-shadow:0 0 0 1.5px #000; pointer-events:none;
+  transform:translate(-50%,-50%);
+}
+/* 미리보기 + hex */
+.cpicker-bottom {
+  display:flex; align-items:center; gap:10px; margin-bottom:14px;
+}
+.cpicker-preview {
+  width:40px; height:40px; border-radius:8px;
+  border:1.5px solid var(--border); flex-shrink:0;
+}
+.cpicker-hex {
+  flex:1; padding:8px 10px;
+  border:1.5px solid var(--border); border-radius:9px;
+  font-size:.88rem; font-family:inherit;
+}
+.cpicker-hex:focus { outline:none; border-color:var(--accent); }
+.cpicker-btns { display:flex; gap:8px; }
+.cpicker-btns button {
+  flex:1; padding:10px; border:none; border-radius:10px;
+  font-size:.85rem; font-weight:700; font-family:inherit; cursor:pointer;
+}
+.cpicker-ok  { background:var(--accent); color:#fff; }
+.cpicker-cancel { background:#f0f0f0; color:var(--text); }
 
 /* 선택된 색 칩 */
 .chips-wrap { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; min-height:28px; }
@@ -279,8 +351,12 @@ input[type="color"] {
     <div class="card-title">몸통 색 <small style="font-weight:400;font-size:.72rem;color:var(--muted);margin-left:4px;">여러 개 추가 가능 · 선택 안 해도 됩니다</small></div>
     <div class="color-pick-row">
       <input type="color" id="body-picker" value="#d4c5b0">
-      <button class="color-add-btn" onclick="addColor('body')">+ 추가</button>
-      <span class="color-note">색상 피커로 고른 뒤 추가하세요</span>
+      <div class="color-btn-wrap">
+        <div class="color-swatch-btn" id="body-swatch" style="background:#d4c5b0"
+             onclick="openPicker('body')"></div>
+        <button class="color-add-btn" onclick="addColor('body')">+ 추가</button>
+        <span class="color-note">색 선택 후 추가</span>
+      </div>
     </div>
     <div class="chips-wrap" id="body-chips"><span class="chips-empty">선택된 색 없음</span></div>
     <div class="field" style="margin-top:10px;margin-bottom:0">
@@ -294,8 +370,12 @@ input[type="color"] {
     <div class="card-title">눈 색 <small style="font-weight:400;font-size:.72rem;color:var(--muted);margin-left:4px;">여러 개 추가 가능 · 선택 안 해도 됩니다</small></div>
     <div class="color-pick-row">
       <input type="color" id="eye-picker" value="#4a90d9">
-      <button class="color-add-btn" onclick="addColor('eye')">+ 추가</button>
-      <span class="color-note">색상 피커로 고른 뒤 추가하세요</span>
+      <div class="color-btn-wrap">
+        <div class="color-swatch-btn" id="eye-swatch" style="background:#4a90d9"
+             onclick="openPicker('eye')"></div>
+        <button class="color-add-btn" onclick="addColor('eye')">+ 추가</button>
+        <span class="color-note">색 선택 후 추가</span>
+      </div>
     </div>
     <div class="chips-wrap" id="eye-chips"><span class="chips-empty">선택된 색 없음</span></div>
   </div>
@@ -305,8 +385,12 @@ input[type="color"] {
     <div class="card-title">젤리 색 <small style="font-weight:400;font-size:.72rem;color:var(--muted);margin-left:4px;">여러 개 추가 가능 · 선택 안 해도 됩니다</small></div>
     <div class="color-pick-row">
       <input type="color" id="jelly-picker" value="#f0b0b8">
-      <button class="color-add-btn" onclick="addColor('jelly')">+ 추가</button>
-      <span class="color-note">색상 피커로 고른 뒤 추가하세요</span>
+      <div class="color-btn-wrap">
+        <div class="color-swatch-btn" id="jelly-swatch" style="background:#f0b0b8"
+             onclick="openPicker('jelly')"></div>
+        <button class="color-add-btn" onclick="addColor('jelly')">+ 추가</button>
+        <span class="color-note">색 선택 후 추가</span>
+      </div>
     </div>
     <div class="chips-wrap" id="jelly-chips"><span class="chips-empty">선택된 색 없음</span></div>
   </div>
@@ -372,11 +456,181 @@ input[type="color"] {
   </div>
 
 </div>
+<!-- 커스텀 색상 피커 모달 -->
+<div class="cpicker-overlay" id="cpicker-overlay">
+  <div class="cpicker-box">
+    <div class="cpicker-title" id="cpicker-title">색상 선택</div>
+    <div class="cpicker-gradient" id="cpicker-gradient">
+      <canvas id="cpicker-canvas"></canvas>
+      <div class="cpicker-cursor" id="cpicker-cursor"></div>
+    </div>
+    <div class="cpicker-hue" id="cpicker-hue">
+      <div class="cpicker-hue-thumb" id="cpicker-hue-thumb"></div>
+    </div>
+    <div class="cpicker-bottom">
+      <div class="cpicker-preview" id="cpicker-preview"></div>
+      <input class="cpicker-hex" id="cpicker-hex" maxlength="7" placeholder="#rrggbb">
+    </div>
+    <div class="cpicker-btns">
+      <button class="cpicker-cancel" onclick="closePicker()">취소</button>
+      <button class="cpicker-ok" onclick="confirmPicker()">선택</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
 /* ── 색상 상태 ── */
 const colorState = { body:[], eye:[], jelly:[] };
+
+// ── 커스텀 색상 피커 ──
+let pickerType = null;
+let pickerHue = 0;       // 0~360
+let pickerSat = 1.0;     // 0~1
+let pickerVal = 1.0;     // 0~1 (value/brightness)
+
+function hsvToRgb(h,s,v) {
+  let r,g,b;
+  const i=Math.floor(h/60)%6, f=h/60-Math.floor(h/60);
+  const p=v*(1-s),q=v*(1-f*s),t=v*(1-(1-f)*s);
+  if(i===0){r=v;g=t;b=p;}else if(i===1){r=q;g=v;b=p;}
+  else if(i===2){r=p;g=v;b=t;}else if(i===3){r=p;g=q;b=v;}
+  else if(i===4){r=t;g=p;b=v;}else{r=v;g=p;b=q;}
+  return [Math.round(r*255),Math.round(g*255),Math.round(b*255)];
+}
+function rgbToHex(r,g,b){
+  return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+function hexToRgb(hex){
+  const m=hex.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+  return m?[parseInt(m[1],16),parseInt(m[2],16),parseInt(m[3],16)]:null;
+}
+function rgbToHsv(r,g,b){
+  r/=255;g/=255;b/=255;
+  const max=Math.max(r,g,b),min=Math.min(r,g,b),d=max-min;
+  let h=0,s=max===0?0:d/max,v=max;
+  if(d!==0){
+    if(max===r)h=((g-b)/d+6)%6;
+    else if(max===g)h=(b-r)/d+2;
+    else h=(r-g)/d+4;
+    h*=60;
+  }
+  return [h,s,v];
+}
+
+function drawGradient() {
+  const canvas = document.getElementById('cpicker-canvas');
+  const box = document.getElementById('cpicker-gradient');
+  canvas.width = box.clientWidth || 260;
+  canvas.height = box.clientHeight || 180;
+  const ctx = canvas.getContext('2d');
+  // hue base color
+  const [hr,hg,hb] = hsvToRgb(pickerHue,1,1);
+  const base = `rgb(${hr},${hg},${hb})`;
+  // white → hue
+  const gH = ctx.createLinearGradient(0,0,canvas.width,0);
+  gH.addColorStop(0,'#fff'); gH.addColorStop(1,base);
+  ctx.fillStyle = gH; ctx.fillRect(0,0,canvas.width,canvas.height);
+  // transparent → black
+  const gV = ctx.createLinearGradient(0,0,0,canvas.height);
+  gV.addColorStop(0,'rgba(0,0,0,0)'); gV.addColorStop(1,'#000');
+  ctx.fillStyle = gV; ctx.fillRect(0,0,canvas.width,canvas.height);
+}
+
+function updateCursor() {
+  const canvas = document.getElementById('cpicker-canvas');
+  const cursor = document.getElementById('cpicker-cursor');
+  cursor.style.left = (pickerSat * canvas.width) + 'px';
+  cursor.style.top  = ((1-pickerVal) * canvas.height) + 'px';
+}
+function updateHueThumb() {
+  const hue = document.getElementById('cpicker-hue');
+  const thumb = document.getElementById('cpicker-hue-thumb');
+  thumb.style.left = (pickerHue/360 * hue.clientWidth) + 'px';
+}
+function updatePreview() {
+  const [r,g,b] = hsvToRgb(pickerHue,pickerSat,pickerVal);
+  const hex = rgbToHex(r,g,b);
+  document.getElementById('cpicker-preview').style.background = hex;
+  document.getElementById('cpicker-hex').value = hex;
+}
+function refreshPicker() {
+  drawGradient(); updateCursor(); updateHueThumb(); updatePreview();
+}
+
+function openPicker(type) {
+  pickerType = type;
+  const cur = document.getElementById(type+'-picker').value;
+  const rgb = hexToRgb(cur);
+  if(rgb) { const hsv=rgbToHsv(...rgb); pickerHue=hsv[0]; pickerSat=hsv[1]; pickerVal=hsv[2]; }
+  document.getElementById('cpicker-overlay').classList.add('open');
+  setTimeout(refreshPicker, 30);
+}
+function closePicker() {
+  document.getElementById('cpicker-overlay').classList.remove('open');
+  pickerType = null;
+}
+function confirmPicker() {
+  if(!pickerType) return;
+  const hex = document.getElementById('cpicker-hex').value;
+  document.getElementById(pickerType+'-picker').value = hex;
+  document.getElementById(pickerType+'-swatch').style.background = hex;
+  closePicker();
+}
+
+// gradient 드래그
+function onGradientPointer(e) {
+  const canvas = document.getElementById('cpicker-canvas');
+  const rect = canvas.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  pickerSat = Math.max(0,Math.min(1,(clientX-rect.left)/rect.width));
+  pickerVal = Math.max(0,Math.min(1,1-(clientY-rect.top)/rect.height));
+  updateCursor(); updatePreview();
+}
+const grad = document.getElementById('cpicker-gradient');
+let gradDown = false;
+grad.addEventListener('mousedown',  e=>{gradDown=true; onGradientPointer(e);});
+grad.addEventListener('touchstart', e=>{gradDown=true; onGradientPointer(e);},{passive:true});
+document.addEventListener('mousemove',  e=>{ if(gradDown) onGradientPointer(e); });
+document.addEventListener('touchmove',  e=>{ if(gradDown) onGradientPointer(e); },{passive:true});
+document.addEventListener('mouseup',  ()=>gradDown=false);
+document.addEventListener('touchend', ()=>gradDown=false);
+
+// hue 드래그
+function onHuePointer(e) {
+  const hue = document.getElementById('cpicker-hue');
+  const rect = hue.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  pickerHue = Math.max(0,Math.min(360,((clientX-rect.left)/rect.width)*360));
+  drawGradient(); updateHueThumb(); updatePreview();
+}
+const hueEl = document.getElementById('cpicker-hue');
+let hueDown = false;
+hueEl.addEventListener('mousedown',  e=>{hueDown=true; onHuePointer(e);});
+hueEl.addEventListener('touchstart', e=>{hueDown=true; onHuePointer(e);},{passive:true});
+document.addEventListener('mousemove',  e=>{ if(hueDown) onHuePointer(e); });
+document.addEventListener('touchmove',  e=>{ if(hueDown) onHuePointer(e); },{passive:true});
+document.addEventListener('mouseup',  ()=>hueDown=false);
+document.addEventListener('touchend', ()=>hueDown=false);
+
+// hex 직접 입력
+document.getElementById('cpicker-hex').addEventListener('input', function() {
+  const hex = this.value.trim();
+  if(/^#[0-9a-fA-F]{6}$/.test(hex)) {
+    const rgb = hexToRgb(hex);
+    const hsv = rgbToHsv(...rgb);
+    pickerHue=hsv[0]; pickerSat=hsv[1]; pickerVal=hsv[2];
+    drawGradient(); updateCursor(); updateHueThumb();
+    document.getElementById('cpicker-preview').style.background = hex;
+  }
+});
+
+// 오버레이 바깥 클릭 닫기
+document.getElementById('cpicker-overlay').addEventListener('click', function(e) {
+  if(e.target===this) closePicker();
+});
 
 function addColor(type) {
   const hex = document.getElementById(type+'-picker').value.toLowerCase();
@@ -604,8 +858,11 @@ async function savePNG() {
       allowTaint: true,
       logging: false
     });
+    const now = new Date();
+    const ts = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+    const cname = document.getElementById('charname').value.trim() || 'commission';
     const a = document.createElement('a');
-    a.download = `커미션_신청서_${document.getElementById('nickname').value.trim()||'commission'}.png`;
+    a.download = `${cname}_${ts}.png`;
     a.href = canvas.toDataURL('image/png');
     a.click();
     showToast('저장 완료! 📥');
