@@ -327,7 +327,7 @@ input[type="color"] {
     </div>
     <div class="field" style="margin-top:11px;margin-bottom:0">
       <label>기타 (직접 입력)</label>
-      <input type="text" id="ear-custom" placeholder="예) 뾰족하게 접힌 귀 등">
+      <input type="text" id="ear-custom" placeholder="예) 왼쪽 귀 끝에만 다른 색, 귀 안쪽 분홍 등">
     </div>
   </div>
 
@@ -378,6 +378,10 @@ input[type="color"] {
       </div>
     </div>
     <div class="chips-wrap" id="eye-chips"><span class="chips-empty">선택된 색 없음</span></div>
+    <div class="field" style="margin-top:10px;margin-bottom:0">
+      <label>기타 (직접 입력)</label>
+      <input type="text" id="eye-extra" placeholder="예) (그림시점)왼쪽 파랑 / 오른쪽 빨강, 오드아이 등">
+    </div>
   </div>
 
   <!-- 젤리 색 -->
@@ -401,6 +405,10 @@ input[type="color"] {
     <div class="field">
       <label>점 / 무늬</label>
       <input type="text" id="pattern-input" placeholder="예) 없음 / 점박이 / 줄무늬 / 삼색이 / 투톤">
+    </div>
+    <div class="field">
+      <label>입 모양</label>
+      <input type="text" id="mouth-input" placeholder="예) ㅅ 입, - 입, ω 입, 앙 다문 입 등">
     </div>
     <div class="field">
       <label>악세사리 / 소품</label>
@@ -717,7 +725,7 @@ function showToast(msg) {
 
 /* ── 초기화 ── */
 function resetForm() {
-  ['nickname','charname','ear-custom','eyeshape-custom','pattern-input','acc-input','extra','body-extra']
+  ['nickname','charname','ear-custom','eyeshape-custom','pattern-input','acc-input','extra','body-extra','eye-extra','mouth-input']
     .forEach(id => document.getElementById(id).value = '');
   document.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('active'));
   selections.ear = null; selections.eyeshape = null;
@@ -735,7 +743,9 @@ async function generatePreview() {
   const eyeC    = document.getElementById('eyeshape-custom').value.trim();
   const pattern   = document.getElementById('pattern-input').value.trim() || '없음';
   const acc       = document.getElementById('acc-input').value.trim()     || '없음';
+  const mouth     = document.getElementById('mouth-input').value.trim()   || '없음';
   const bodyExtra = document.getElementById('body-extra').value.trim();
+  const eyeExtra  = document.getElementById('eye-extra').value.trim();
   const extra   = document.getElementById('extra').value.trim().replace(/\n/g, '<br>') || '없음';
   const ear     = earC || selections.ear      || '(미선택)';
   const eye     = eyeC || selections.eyeshape || '(미선택)';
@@ -792,8 +802,10 @@ async function generatePreview() {
   addColorRow('몸통 색', colorState.body);
   if (bodyExtra) addRow('몸통 색 기타', bodyExtra);
   addColorRow('눈 색', colorState.eye);
+  if (eyeExtra) addRow('눈 색 기타', eyeExtra, true);
   addColorRow('젤리 색', colorState.jelly);
   addRow('점 / 무늬', pattern);
+  addRow('입 모양', mouth);
   addRow('악세사리', acc);
   addRow('추가 요청', extra, true);
 
